@@ -2,13 +2,11 @@ import express, { Request, Response } from "express";
 import cors from "cors";
 import axios from "axios";
 import status from "express-status-monitor";
-import zlib from "zlib";
 
 const app = express();
 const PORT = 5001;
 
 app.use(status());
-
 app.use(cors());
 app.use(express.json());
 
@@ -22,10 +20,32 @@ app.get("/photos", async (req: Request, res: Response) => {
     );
 
     res.setHeader("Content-Type", "application/json");
-    res.setHeader("Content-Encoding", "gzip");
 
-    const gzip = zlib.createGzip();
-    response.data.pipe(gzip).pipe(res);
+    let accumulatedChunk = "";
+    let isFirstChunk = true;
+    let totalChunkSize = 0;
+
+    response.data.on("data", (chunk: any) => {
+      accumulatedChunk += chunk.toString();
+      totalChunkSize += chunk.length;
+
+      if (totalChunkSize >= 20 * 1024) {
+        if (!isFirstChunk) res.write(",");
+        res.write(accumulatedChunk);
+        accumulatedChunk = "";
+        totalChunkSize = 0;
+        isFirstChunk = false;
+      }
+    });
+
+    response.data.on("end", () => {
+      if (accumulatedChunk) {
+        if (!isFirstChunk) res.write(",");
+        res.write(accumulatedChunk);
+      }
+      res.write("]");
+      res.end();
+    });
 
     response.data.on("error", (err: any) => {
       console.error("Stream error:", err);
