@@ -1,29 +1,50 @@
 import React, { useState, useEffect } from "react";
 
-interface Photo {
-  id: number;
-  title: string;
-  url: string;
-  thumbnailUrl: string;
-}
-
 const CompressedDataViewer: React.FC = () => {
-  const [photos, setPhotos] = useState<Photo[]>([]);
+  const [dataChunks, setDataChunks] = useState<string[]>([]);
+  const [currentIndex, setCurrentIndex] = useState<number>(0);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
+  const [hasMore, setHasMore] = useState<boolean>(true);
 
   const fetchData = async () => {
     setLoading(true);
     setError(null);
 
     try {
-      const response = await fetch("http://localhost:5001/photos"); // Adjust the URL as needed
+      const response = await fetch("http://localhost:5001/photos");
       if (!response.ok) {
         throw new Error(`Error fetching data: ${response.statusText}`);
       }
 
-      const data = await response.json(); // Browser decompresses gzip automatically
-      setPhotos(data);
+      const reader = response.body?.getReader();
+      const decoder = new TextDecoder();
+      let done = false;
+      let accumulatedData = "";
+
+      if (!reader) {
+        throw new Error("No readable stream available");
+      }
+
+      const chunks: string[] = [];
+
+      while (!done) {
+        const { value, done: streamDone } = await reader.read();
+        done = streamDone;
+
+        if (value) {
+          const chunk = decoder.decode(value, { stream: true });
+          accumulatedData += chunk;
+
+          if (accumulatedData.length >= 20 * 1024 || done) {
+            chunks.push(accumulatedData);
+            accumulatedData = "";
+          }
+        }
+      }
+
+      setDataChunks(chunks);
+      setHasMore(chunks.length > 0);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Unknown error");
     } finally {
@@ -35,19 +56,31 @@ const CompressedDataViewer: React.FC = () => {
     fetchData();
   }, []);
 
+  const handleShowMore = () => {
+    if (currentIndex < dataChunks.length - 1) {
+      setCurrentIndex(currentIndex + 1);
+    } else {
+      setHasMore(false);
+    }
+  };
+
   return (
     <div>
       <h1>Compressed Data Viewer</h1>
       {loading && <p>Loading...</p>}
       {error && <p style={{ color: "red" }}>Error: {error}</p>}
-      <ul>
-        {photos.map((photo) => (
-          <li key={photo.id}>
-            <img src={photo.thumbnailUrl} alt={photo.title} width={50} />
-            <p>{photo.title}</p>
-          </li>
+
+      <div>
+        {dataChunks.slice(0, currentIndex + 1).map((chunk, index) => (
+          <pre key={index}>{chunk}</pre>
         ))}
-      </ul>
+      </div>
+
+      {hasMore && (
+        <button onClick={handleShowMore} disabled={loading}>
+          Show More
+        </button>
+      )}
     </div>
   );
 };
