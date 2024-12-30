@@ -12,7 +12,7 @@ const CompressedDataViewer: React.FC = () => {
     setError(null);
 
     try {
-      const response = await fetch("http://localhost:5001/photos");
+      const response = await fetch("http://localhost:5001/large-json-data");
       if (!response.ok) {
         throw new Error(`Error fetching data: ${response.statusText}`);
       }
@@ -66,7 +66,7 @@ const CompressedDataViewer: React.FC = () => {
 
   return (
     <div>
-      <h1>Compressed Data Viewer</h1>
+      <h1>Large Json Data</h1>
       {loading && <p>Loading...</p>}
       {error && <p style={{ color: "red" }}>Error: {error}</p>}
 

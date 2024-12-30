@@ -2,22 +2,21 @@ import express, { Request, Response } from "express";
 import cors from "cors";
 import axios from "axios";
 import status from "express-status-monitor";
+import { config } from "./config";
 
 const app = express();
-const PORT = 5001;
+const PORT = config.port;
+const API_URL = config.apiUrl;
 
 app.use(status());
 app.use(cors());
 app.use(express.json());
 
-app.get("/photos", async (req: Request, res: Response) => {
+app.get("/large-json-data", async (req: Request, res: Response) => {
   try {
-    const response = await axios.get(
-      "https://jsonplaceholder.typicode.com/photos",
-      {
-        responseType: "stream",
-      }
-    );
+    const response = await axios.get(API_URL, {
+      responseType: "stream",
+    });
 
     res.setHeader("Content-Type", "application/json");
 
