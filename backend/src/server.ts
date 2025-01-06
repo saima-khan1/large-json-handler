@@ -1,6 +1,7 @@
 import express, { Request, Response } from "express";
 import cors from "cors";
 import axios from "axios";
+import JSONStream from "jsonstream";
 import status from "express-status-monitor";
 import { config } from "./config";
 
@@ -21,35 +22,44 @@ app.get("/large-json-data", async (req: Request, res: Response) => {
     res.setHeader("Content-Type", "application/json");
 
     let accumulatedChunk = "";
-    let isFirstChunk = true;
     let totalChunkSize = 0;
+    const CHUNK_SIZE_LIMIT = 20 * 1024;
+    let isFirstChunk = true;
 
-    response.data.on("data", (chunk: any) => {
-      accumulatedChunk += chunk.toString();
-      totalChunkSize += chunk.length;
-
-      if (totalChunkSize >= 20 * 1024) {
-        if (!isFirstChunk) res.write(",");
-        res.write(accumulatedChunk);
-        accumulatedChunk = "";
-        totalChunkSize = 0;
+    response.data
+      .pipe(JSONStream.parse("*"))
+      .on("data", (jsonData: any) => {
+        const jsonString = JSON.stringify(jsonData, null, 2);
+        if (!isFirstChunk) {
+          accumulatedChunk += ",";
+        }
         isFirstChunk = false;
-      }
-    });
 
-    response.data.on("end", () => {
-      if (accumulatedChunk) {
-        if (!isFirstChunk) res.write(",");
-        res.write(accumulatedChunk);
-      }
-      res.write("]");
-      res.end();
-    });
+        accumulatedChunk += jsonString;
+        totalChunkSize += jsonString.length;
 
-    response.data.on("error", (err: any) => {
-      console.error("Stream error:", err);
-      res.status(500).end();
-    });
+        if (totalChunkSize >= CHUNK_SIZE_LIMIT) {
+          try {
+            res.write(accumulatedChunk);
+            accumulatedChunk = "";
+            totalChunkSize = 0;
+          } catch (error) {
+            console.error("Error writing chunk:", error);
+            res.status(500).end();
+          }
+        }
+      })
+      .on("end", () => {
+        if (accumulatedChunk) {
+          res.write(accumulatedChunk);
+        }
+        //res.write("]");
+        res.end();
+      })
+      .on("error", (err: any) => {
+        console.error("Stream error:", err);
+        res.status(500).end();
+      });
   } catch (error) {
     console.error("Error fetching data:", error);
     res.status(500).json({ error: "Failed to fetch data" });
