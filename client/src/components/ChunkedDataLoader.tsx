@@ -1,11 +1,14 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 
-const CompressedDataViewer: React.FC = () => {
-  const [dataChunks, setDataChunks] = useState<string[]>([]);
-  const [currentIndex, setCurrentIndex] = useState<number>(0);
-  const [loading, setLoading] = useState<boolean>(false);
+const ChunkedDataLoader: React.FC = () => {
+  const allChunksRef = useRef<string[]>([]);
+  const [visibleChunks, setVisibleChunks] = useState<string[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [hasMore, setHasMore] = useState<boolean>(true);
+  const [currentIndex, setCurrentIndex] = useState<number>(0);
+  const [isFetchingNextChunk, setIsFetchingNextChunk] =
+    useState<boolean>(false);
 
   const fetchData = async () => {
     setLoading(true);
@@ -26,8 +29,6 @@ const CompressedDataViewer: React.FC = () => {
         throw new Error("No readable stream available");
       }
 
-      const chunks: string[] = [];
-
       while (!done) {
         const { value, done: streamDone } = await reader.read();
         done = streamDone;
@@ -36,53 +37,67 @@ const CompressedDataViewer: React.FC = () => {
           const chunk = decoder.decode(value, { stream: true });
           accumulatedData += chunk;
 
-          if (accumulatedData.length >= 20 * 1024 || done) {
-            chunks.push(accumulatedData);
-            accumulatedData = "";
+          allChunksRef.current.push(accumulatedData);
+          accumulatedData = "";
+
+          if (currentIndex === 0) {
+            setVisibleChunks([allChunksRef.current[0]]);
           }
         }
       }
 
-      setDataChunks(chunks);
-      setHasMore(chunks.length > 0);
+      setLoading(false);
+      setHasMore(allChunksRef.current.length > visibleChunks.length);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Unknown error");
-    } finally {
       setLoading(false);
     }
+  };
+
+  const handleShowMore = () => {
+    if (isFetchingNextChunk || loading) return;
+
+    setIsFetchingNextChunk(true);
+    const nextIndex = currentIndex + 1;
+
+    if (nextIndex < allChunksRef.current.length) {
+      setVisibleChunks((prevChunks) => [
+        ...prevChunks,
+        allChunksRef.current[nextIndex],
+      ]);
+      setCurrentIndex(nextIndex);
+      setHasMore(nextIndex + 1 < allChunksRef.current.length);
+    }
+
+    setIsFetchingNextChunk(false);
   };
 
   useEffect(() => {
     fetchData();
   }, []);
 
-  const handleShowMore = () => {
-    if (currentIndex < dataChunks.length - 1) {
-      setCurrentIndex(currentIndex + 1);
-    } else {
-      setHasMore(false);
-    }
-  };
-
   return (
     <div>
-      <h1>Large Json Data</h1>
+      <h1>Large JSON Data</h1>
       {loading && <p>Loading...</p>}
       {error && <p style={{ color: "red" }}>Error: {error}</p>}
 
       <div>
-        {dataChunks.slice(0, currentIndex + 1).map((chunk, index) => (
+        {visibleChunks.map((chunk, index) => (
           <pre key={index}>{chunk}</pre>
         ))}
       </div>
 
-      {hasMore && (
-        <button onClick={handleShowMore} disabled={loading}>
-          Show More
+      {!loading && hasMore && (
+        <button
+          onClick={handleShowMore}
+          disabled={isFetchingNextChunk || loading}
+        >
+          {isFetchingNextChunk ? "Loading More..." : "Show More"}
         </button>
       )}
     </div>
   );
 };
 
-export default CompressedDataViewer;
+export default ChunkedDataLoader;
