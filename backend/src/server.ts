@@ -13,7 +13,27 @@ app.use(status());
 app.use(cors());
 app.use(express.json());
 
+const searchObject = (obj: any, keyword: string): boolean => {
+  if (typeof obj === "string") {
+    return obj.toLowerCase().includes(keyword.toLowerCase());
+  }
+
+  if (typeof obj === "object" && obj !== null) {
+    for (const key in obj) {
+      if (obj.hasOwnProperty(key)) {
+        if (searchObject(obj[key], keyword)) {
+          return true;
+        }
+      }
+    }
+  }
+
+  return false;
+};
+
 app.get("/large-json-data", async (req: Request, res: Response) => {
+  const searchKeyword = (req.query.search as string) || "";
+
   try {
     const response = await axios.get(API_URL, {
       responseType: "stream",
@@ -27,25 +47,51 @@ app.get("/large-json-data", async (req: Request, res: Response) => {
     let isFirstChunk = true;
 
     response.data
-      .pipe(JSONStream.parse("*"))
+      .pipe(JSONStream.parse("resources.*"))
       .on("data", (jsonData: any) => {
-        const jsonString = JSON.stringify(jsonData, null, 2);
-        if (!isFirstChunk) {
-          accumulatedChunk += ",";
-        }
-        isFirstChunk = false;
+        if (searchKeyword) {
+          if (searchObject(jsonData, searchKeyword)) {
+            const jsonString = JSON.stringify(jsonData, null, 2);
 
-        accumulatedChunk += jsonString;
-        totalChunkSize += jsonString.length;
+            if (!isFirstChunk) {
+              accumulatedChunk += ",";
+            }
+            isFirstChunk = false;
 
-        if (totalChunkSize >= CHUNK_SIZE_LIMIT) {
-          try {
-            res.write(accumulatedChunk);
-            accumulatedChunk = "";
-            totalChunkSize = 0;
-          } catch (error) {
-            console.error("Error writing chunk:", error);
-            res.status(500).end();
+            accumulatedChunk += jsonString;
+            totalChunkSize += jsonString.length;
+
+            if (totalChunkSize >= CHUNK_SIZE_LIMIT) {
+              try {
+                res.write(accumulatedChunk);
+                accumulatedChunk = "";
+                totalChunkSize = 0;
+              } catch (error) {
+                console.error("Error writing chunk:", error);
+                res.status(500).end();
+              }
+            }
+          }
+        } else {
+          const jsonString = JSON.stringify(jsonData, null, 2);
+
+          if (!isFirstChunk) {
+            accumulatedChunk += ",";
+          }
+          isFirstChunk = false;
+
+          accumulatedChunk += jsonString;
+          totalChunkSize += jsonString.length;
+
+          if (totalChunkSize >= CHUNK_SIZE_LIMIT) {
+            try {
+              res.write(accumulatedChunk);
+              accumulatedChunk = "";
+              totalChunkSize = 0;
+            } catch (error) {
+              console.error("Error writing chunk:", error);
+              res.status(500).end();
+            }
           }
         }
       })
@@ -53,7 +99,6 @@ app.get("/large-json-data", async (req: Request, res: Response) => {
         if (accumulatedChunk) {
           res.write(accumulatedChunk);
         }
-        //res.write("]");
         res.end();
       })
       .on("error", (err: any) => {
