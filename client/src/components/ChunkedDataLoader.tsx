@@ -81,6 +81,7 @@ const ChunkedDataLoader: React.FC = () => {
           searchChunksRef.current[nextSearchIndex],
         ]);
         setCurrentSearchIndex(nextSearchIndex);
+
         setHasMoreSearch(nextSearchIndex + 1 < searchChunksRef.current.length);
       }
     } else {
@@ -183,23 +184,24 @@ const ChunkedDataLoader: React.FC = () => {
         ))}
       </div>
 
-      {!loading && (hasMore || (isSearchActive && hasMoreSearch)) && (
-        <button
-          onClick={handleShowMore}
-          style={{
-            padding: "10px 20px",
-            fontSize: "16px",
-            backgroundColor: "#28A745",
-            color: "white",
-            border: "none",
-            borderRadius: "5px",
-            cursor: "pointer",
-            marginTop: "20px",
-          }}
-        >
-          Show More
-        </button>
-      )}
+      {!loading &&
+        ((isSearchActive && hasMoreSearch) || (!isSearchActive && hasMore)) && (
+          <button
+            onClick={handleShowMore}
+            style={{
+              padding: "10px 20px",
+              fontSize: "16px",
+              backgroundColor: "#28A745",
+              color: "white",
+              border: "none",
+              borderRadius: "5px",
+              cursor: "pointer",
+              marginTop: "20px",
+            }}
+          >
+            Show More
+          </button>
+        )}
     </div>
   );
 };
