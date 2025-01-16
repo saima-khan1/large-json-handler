@@ -1,4 +1,8 @@
 import React, { useState, useEffect, useRef } from "react";
+import JSONPretty from "react-json-pretty";
+import "react-json-pretty/themes/monikai.css";
+
+import { jsonrepair } from "jsonrepair";
 
 const ChunkedDataLoader: React.FC = () => {
   const allChunksRef = useRef<string[]>([]);
@@ -175,13 +179,31 @@ const ChunkedDataLoader: React.FC = () => {
         )}
       </div>
 
-      {loading && <p>Loading...</p>}
       {error && <p style={{ color: "red" }}>Error: {error}</p>}
 
       <div>
-        {visibleChunks.map((chunk, index) => (
-          <pre key={index}>{chunk}</pre>
-        ))}
+        {loading ? (
+          <p>Loading...</p>
+        ) : visibleChunks.length === 0 || !visibleChunks.join("").trim() ? (
+          <p style={{ color: "gray" }}>No data available...</p>
+        ) : (
+          (() => {
+            try {
+              const fullJson = visibleChunks.join("");
+              const repairedJson = jsonrepair(fullJson);
+              return (
+                <JSONPretty style={{ fontSize: "1.5em" }} data={repairedJson} />
+              );
+            } catch (err) {
+              return (
+                <p style={{ color: "red" }}>
+                  Invalid JSON:{" "}
+                  {err instanceof Error ? err.message : "Unknown error"}
+                </p>
+              );
+            }
+          })()
+        )}
       </div>
 
       {!loading &&
