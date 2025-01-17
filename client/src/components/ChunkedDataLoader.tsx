@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import JSONPretty from "react-json-pretty";
-import "react-json-pretty/themes/monikai.css";
+import ReactJson from "react-json-view";
 
 import { jsonrepair } from "jsonrepair";
 
@@ -191,8 +190,18 @@ const ChunkedDataLoader: React.FC = () => {
             try {
               const fullJson = visibleChunks.join("");
               const repairedJson = jsonrepair(fullJson);
+              const parsedJson = JSON.parse(repairedJson);
               return (
-                <JSONPretty style={{ fontSize: "1.5em" }} data={repairedJson} />
+                <ReactJson
+                  src={parsedJson}
+                  theme="monokai"
+                  collapsed={1}
+                  enableClipboard={true}
+                  displayDataTypes={false}
+                  iconStyle="triangle"
+                  groupArraysAfterLength={0}
+                  style={{ fontSize: "18px" }}
+                />
               );
             } catch (err) {
               return (
