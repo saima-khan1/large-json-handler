@@ -20,10 +20,8 @@ const searchObject = (obj: any, keyword: string): boolean => {
 
   if (typeof obj === "object" && obj !== null) {
     for (const key in obj) {
-      if (obj.hasOwnProperty(key)) {
-        if (searchObject(obj[key], keyword)) {
-          return true;
-        }
+      if (obj.hasOwnProperty(key) && searchObject(obj[key], keyword)) {
+        return true;
       }
     }
   }
@@ -35,9 +33,7 @@ app.get("/large-json-data", async (req: Request, res: Response) => {
   const searchKeyword = (req.query.search as string) || "";
 
   try {
-    const response = await axios.get(API_URL, {
-      responseType: "stream",
-    });
+    const response = await axios.get(API_URL, { responseType: "stream" });
 
     res.setHeader("Content-Type", "application/json");
 
@@ -47,52 +43,12 @@ app.get("/large-json-data", async (req: Request, res: Response) => {
     let isFirstChunk = true;
 
     response.data
-      .pipe(JSONStream.parse("resources.*"))
+      .pipe(JSONStream.parse("*"))
       .on("data", (jsonData: any) => {
-        if (searchKeyword) {
-          if (searchObject(jsonData, searchKeyword)) {
-            const jsonString = JSON.stringify(jsonData, null, 2);
-
-            if (!isFirstChunk) {
-              accumulatedChunk += ",";
-            }
-            isFirstChunk = false;
-
-            accumulatedChunk += jsonString;
-            totalChunkSize += jsonString.length;
-
-            if (totalChunkSize >= CHUNK_SIZE_LIMIT) {
-              try {
-                res.write(accumulatedChunk);
-                accumulatedChunk = "";
-                totalChunkSize = 0;
-              } catch (error) {
-                console.error("Error writing chunk:", error);
-                res.status(500).end();
-              }
-            }
-          }
+        if (Array.isArray(jsonData)) {
+          jsonData.forEach(processAndSendObject);
         } else {
-          const jsonString = JSON.stringify(jsonData, null, 2);
-
-          if (!isFirstChunk) {
-            accumulatedChunk += ",";
-          }
-          isFirstChunk = false;
-
-          accumulatedChunk += jsonString;
-          totalChunkSize += jsonString.length;
-
-          if (totalChunkSize >= CHUNK_SIZE_LIMIT) {
-            try {
-              res.write(accumulatedChunk);
-              accumulatedChunk = "";
-              totalChunkSize = 0;
-            } catch (error) {
-              console.error("Error writing chunk:", error);
-              res.status(500).end();
-            }
-          }
+          processAndSendObject(jsonData);
         }
       })
       .on("end", () => {
@@ -105,6 +61,31 @@ app.get("/large-json-data", async (req: Request, res: Response) => {
         console.error("Stream error:", err);
         res.status(500).end();
       });
+
+    function processAndSendObject(obj: any) {
+      if (!searchKeyword || searchObject(obj, searchKeyword)) {
+        const jsonString = JSON.stringify(obj, null, 2);
+
+        if (!isFirstChunk) {
+          accumulatedChunk += ",";
+        }
+        isFirstChunk = false;
+
+        accumulatedChunk += jsonString;
+        totalChunkSize += jsonString.length;
+
+        if (totalChunkSize >= CHUNK_SIZE_LIMIT) {
+          try {
+            res.write(accumulatedChunk);
+            accumulatedChunk = "";
+            totalChunkSize = 0;
+          } catch (error) {
+            console.error("Error writing chunk:", error);
+            res.status(500).end();
+          }
+        }
+      }
+    }
   } catch (error) {
     console.error("Error fetching data:", error);
     res.status(500).json({ error: "Failed to fetch data" });
