@@ -7,17 +7,21 @@ import { config } from "./config";
 
 const app = express();
 const PORT = config.port;
-const API_URL = config.apiUrl;
 
 app.use(status());
-app.use(cors());
+app.use(
+  cors({
+    origin: "*",
+    methods: "GET, POST, OPTIONS",
+    allowedHeaders: "*",
+  })
+);
 app.use(express.json());
 
 const searchObject = (obj: any, keyword: string): boolean => {
   if (typeof obj === "string") {
     return obj.toLowerCase().includes(keyword.toLowerCase());
   }
-
   if (typeof obj === "object" && obj !== null) {
     for (const key in obj) {
       if (obj.hasOwnProperty(key) && searchObject(obj[key], keyword)) {
@@ -25,15 +29,23 @@ const searchObject = (obj: any, keyword: string): boolean => {
       }
     }
   }
-
   return false;
 };
 
 app.get("/large-json-data", async (req: Request, res: Response) => {
+  const sourceUrl = req.query.sourceUrl as string;
   const searchKeyword = (req.query.search as string) || "";
 
+  if (!sourceUrl) {
+    res.status(400).json({ error: "No source URL provided" });
+    return;
+  }
+
   try {
-    const response = await axios.get(API_URL, { responseType: "stream" });
+    const response = await axios.get(sourceUrl, {
+      responseType: "stream",
+      headers: { "User-Agent": "Mozilla/5.0" },
+    });
 
     res.setHeader("Content-Type", "application/json");
 
@@ -55,6 +67,7 @@ app.get("/large-json-data", async (req: Request, res: Response) => {
         if (accumulatedChunk) {
           res.write(accumulatedChunk);
         }
+
         res.end();
       })
       .on("error", (err: any) => {
@@ -93,5 +106,5 @@ app.get("/large-json-data", async (req: Request, res: Response) => {
 });
 
 app.listen(PORT, () => {
-  console.log(`Backend server running at http://localhost:${PORT}`);
+  console.log(`Backend running at http://localhost:${PORT}`);
 });
