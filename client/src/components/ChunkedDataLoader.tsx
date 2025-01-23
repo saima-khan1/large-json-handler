@@ -1,5 +1,5 @@
 import React, { useState, useRef } from "react";
-import ReactJson from "react-json-view";
+import ReactJson from "@microlink/react-json-view";
 import { jsonrepair } from "jsonrepair";
 
 const ChunkedDataLoader: React.FC = () => {
