@@ -31,7 +31,7 @@ const searchObject = (obj: any, keyword: string): boolean => {
   }
   return false;
 };
-app.get("/api/test", (req, res) => {
+app.get("/test", (req, res) => {
   res.json({ message: "Hello from API!" });
 });
 app.get("/large-json-data", async (req: Request, res: Response) => {

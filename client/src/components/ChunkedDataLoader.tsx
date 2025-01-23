@@ -36,7 +36,7 @@ const ChunkedDataLoader: React.FC = () => {
     setError(null);
 
     try {
-      const apiUrl = `http://localhost:5001/large-json-data?sourceUrl=${encodeURIComponent(
+      const apiUrl = `http://localhost:3000/large-json-data?sourceUrl=${encodeURIComponent(
         url
       )}${search ? `&search=${encodeURIComponent(search)}` : ""}`;
 
