@@ -1,7 +1,7 @@
 import express, { Request, Response } from "express";
 import cors from "cors";
 import axios from "axios";
-import JSONStream from "jsonstream";
+import jsonstream from "jsonstream";
 import status from "express-status-monitor";
 import { config } from "./config";
 
@@ -55,7 +55,7 @@ app.get("/large-json-data", async (req: Request, res: Response) => {
     let isFirstChunk = true;
 
     response.data
-      .pipe(JSONStream.parse("*"))
+      .pipe(jsonstream.parse("*"))
       .on("data", (jsonData: any) => {
         if (Array.isArray(jsonData)) {
           jsonData.forEach(processAndSendObject);
