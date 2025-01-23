@@ -1,7 +1,7 @@
 import express, { Request, Response } from "express";
 import cors from "cors";
 import axios from "axios";
-import * as JSONStream from "jsonstream";
+import JSONStream from "jsonstream";
 import status from "express-status-monitor";
 import { config } from "./config";
 
