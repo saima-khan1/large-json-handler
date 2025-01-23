@@ -2,5 +2,5 @@
   "version": 2,
   "outputDirectory": "dist",
 
-  "rewrites": [{ "source": "/(.*)", "destination": "backend/src/server.ts" }]
+  "rewrites": [{ "source": "/(.*)", "destination": "/" }]
 }
