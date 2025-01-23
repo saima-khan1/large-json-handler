@@ -9,6 +9,7 @@
     "lint": "eslint .",
     "preview": "vite preview"
   },
+  "proxy": "http://localhost:3000",
   "dependencies": {
     "@microlink/react-json-view": "^1.24.0",
     "axios": "^1.7.9",
