@@ -39,7 +39,9 @@ const ChunkedDataLoader: React.FC = () => {
     try {
       const apiUrl = `${
         import.meta.env.VITE_BASE_URL
-      }/large-json-data?sourceUrl=${url}${search ? `&search=${search}` : ""}`;
+      }/api/large-json-data?sourceUrl=${url}${
+        search ? `&search=${search}` : ""
+      }`;
 
       const response = await fetch(apiUrl);
       if (!response.ok) {
