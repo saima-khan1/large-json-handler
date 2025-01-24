@@ -11,7 +11,7 @@ const PORT = config.port;
 app.use(status());
 app.use(
   cors({
-    origin: "*",
+    origin: config.FRONTEND_URL,
     methods: "GET, POST, OPTIONS",
     allowedHeaders: "*",
   })
