@@ -37,10 +37,8 @@ const ChunkedDataLoader: React.FC = () => {
     setError(null);
 
     try {
-      const apiUrl = `${
-        import.meta.env.VITE_BASE_URL
-      }?sourceUrl=${encodeURIComponent(url)}${
-        search ? `&search=${encodeURIComponent(search)}` : ""
+      const apiUrl = `${import.meta.env.VITE_BASE_URL}?sourceUrl=${url}${
+        search ? `&search=${search}` : ""
       }`;
 
       const response = await fetch(apiUrl);
