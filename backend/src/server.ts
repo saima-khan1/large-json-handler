@@ -36,7 +36,7 @@ app.get("/", (req, res) => {
   res.send("Welcome to my API!");
 });
 
-app.get("/api/large-json-data", async (req: Request, res: Response) => {
+app.get("/large-json-data", async (req: Request, res: Response) => {
   const sourceUrl = req.query.sourceUrl as string;
   const searchKeyword = (req.query.search as string) || "";
 
