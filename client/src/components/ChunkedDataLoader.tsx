@@ -1,5 +1,6 @@
 import React, { useState, useRef } from "react";
 import ReactJson from "@microlink/react-json-view";
+
 import { jsonrepair } from "jsonrepair";
 
 const ChunkedDataLoader: React.FC = () => {
@@ -36,9 +37,11 @@ const ChunkedDataLoader: React.FC = () => {
     setError(null);
 
     try {
-      const apiUrl = `http://localhost:3000/large-json-data?sourceUrl=${encodeURIComponent(
-        url
-      )}${search ? `&search=${encodeURIComponent(search)}` : ""}`;
+      const apiUrl = `${
+        import.meta.env.VITE_BASE_URL
+      }?sourceUrl=${encodeURIComponent(url)}${
+        search ? `&search=${encodeURIComponent(search)}` : ""
+      }`;
 
       const response = await fetch(apiUrl);
       if (!response.ok) {
