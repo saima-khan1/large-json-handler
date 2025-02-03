@@ -22,7 +22,7 @@ describe("GET /large-json-data", () => {
 
   it("should handle errors when fetching data", async () => {
     (axios as jest.Mocked<typeof axios>).get.mockRejectedValue(
-      new Error("Internal Server Error")
+      new Error("Error fetching data")
     );
 
     const response = await request(app)
