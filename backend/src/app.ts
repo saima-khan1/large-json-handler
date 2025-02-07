@@ -1,19 +1,20 @@
 import express, { Request, Response } from "express";
 import cors from "cors";
 import { config } from "./config";
-import routes from "./routes";
+import { baseRoutes } from "./routes";
 
 const app = express();
 
-app.use(
-  cors({
-    origin: config.FRONTEND_URL,
-    methods: "GET, POST, OPTIONS",
-    allowedHeaders: "*",
-  })
-);
+const corsConfig = cors({
+  origin: config.FRONTEND_URL,
+  methods: "GET, POST, OPTIONS",
+  allowedHeaders: "*",
+});
+
+app.use(corsConfig);
+
 app.use(express.json());
 
-app.use(routes);
+app.use(baseRoutes);
 
 export default app;
