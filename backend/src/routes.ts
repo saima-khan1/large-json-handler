@@ -1,8 +1,6 @@
 import { Router } from "express";
-import { handleLargeJsonData } from "./streamProcessor";
+import { streamProcessor } from "./streamProcessor";
 
-const router = Router();
+export const baseRoutes = Router();
 
-router.get("/large-json-data", handleLargeJsonData);
-
-export default router;
+baseRoutes.get("/large-json-data", streamProcessor);

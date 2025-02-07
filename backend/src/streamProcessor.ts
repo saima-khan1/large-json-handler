@@ -3,7 +3,10 @@ import axios from "axios";
 import jsonstream from "jsonstream";
 import { searchObject } from "./search";
 
-export const handleLargeJsonData = async (req: Request, res: Response) => {
+export const streamProcessor = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
   const sourceUrl = req.query.sourceUrl as string;
   const searchKeyword = (req.query.search as string) || "";
 
@@ -25,9 +28,14 @@ export const handleLargeJsonData = async (req: Request, res: Response) => {
     const CHUNK_SIZE_LIMIT = 20 * 1024;
     let isFirstChunk = true;
 
+    if (!response.data) {
+      res.json({ message: "not found" });
+      return;
+    }
+
     response.data
       .pipe(jsonstream.parse("*"))
-      .on("data", (jsonData: any) => {
+      .on("data", (jsonData: string | Record<string, unknown> | null) => {
         if (Array.isArray(jsonData)) {
           jsonData.forEach(processAndSendObject);
         } else {
@@ -38,6 +46,7 @@ export const handleLargeJsonData = async (req: Request, res: Response) => {
         if (accumulatedChunk) {
           res.write("[" + accumulatedChunk + "]");
         }
+
         res.end();
       })
       .on("error", (err: any) => {
@@ -45,7 +54,9 @@ export const handleLargeJsonData = async (req: Request, res: Response) => {
         res.status(500).json({ error: "Failed to process stream" });
       });
 
-    function processAndSendObject(obj: any) {
+    function processAndSendObject(
+      obj: string | Record<string, unknown> | null
+    ) {
       if (!searchKeyword || searchObject(obj, searchKeyword)) {
         const jsonString = JSON.stringify(obj, null, 2);
 
@@ -74,3 +85,5 @@ export const handleLargeJsonData = async (req: Request, res: Response) => {
     res.status(500).json({ error: "Failed to fetch data" });
   }
 };
+
+// Add pagination
