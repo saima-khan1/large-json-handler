@@ -139,11 +139,8 @@ const ChunkedDataLoader: React.FC = () => {
             fontWeight="bold"
             sx={{
               textAlign: "center",
-
               pb: 6,
-
               fontSize: { xs: "1.8rem", sm: "2.5rem", md: "3rem" },
-              textShadow: "2px 2px 4px rgba(0, 0, 0, 0.3)",
             }}
           >
             Large Json Data Viewer
