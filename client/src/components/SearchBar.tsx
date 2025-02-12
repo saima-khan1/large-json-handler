@@ -16,7 +16,6 @@ const SearchBar: React.FC<SearchBarProps> = ({
   setSearchKeyword,
   handleSearch,
   handleClearSearch,
-
   isSearching,
   isSearchActive,
 }) => (
@@ -38,14 +37,27 @@ const SearchBar: React.FC<SearchBarProps> = ({
       value={searchKeyword}
       onChange={(e) => setSearchKeyword(e.target.value)}
     />
+
     <Button
       variant="contained"
-      color={isSearchActive ? "error" : "info"}
+      color="info"
       sx={{ borderRadius: 0, lineHeight: 2.75, minWidth: "120px" }}
-      onClick={isSearchActive ? handleClearSearch : handleSearch}
+      onClick={handleSearch}
+      disabled={isSearching}
     >
-      {isSearching ? "Searching..." : isSearchActive ? "Clear" : "Search"}
+      {isSearching ? "Searching..." : "Search"}
     </Button>
+
+    {isSearchActive && (
+      <Button
+        variant="contained"
+        color="error"
+        sx={{ borderRadius: 0, lineHeight: 2.75, minWidth: "120px" }}
+        onClick={handleClearSearch}
+      >
+        Clear
+      </Button>
+    )}
   </Box>
 );
 
