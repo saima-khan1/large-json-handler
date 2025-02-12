@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import axios from "axios";
 import jsonstream from "jsonstream";
+
 import { searchObject } from "./search";
 
 export const streamProcessor = async (
@@ -18,6 +19,7 @@ export const streamProcessor = async (
   try {
     const response = await axios.get(sourceUrl, {
       responseType: "stream",
+      timeout: 30000,
       headers: { "User-Agent": "Mozilla/5.0" },
     });
 
