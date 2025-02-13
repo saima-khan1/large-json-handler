@@ -3,6 +3,7 @@ import cors from "cors";
 import { config } from "./config";
 import { baseRoutes } from "./routes";
 import bodyParser from "body-parser";
+import compression from "compression";
 
 const app = express();
 
@@ -11,6 +12,8 @@ const app = express();
 //   methods: "GET, POST, OPTIONS",
 //   allowedHeaders: "*",
 // });
+
+app.use(compression());
 
 const originWhitelist = [
   "http://localhost:5173",
