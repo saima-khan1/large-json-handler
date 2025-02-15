@@ -324,6 +324,71 @@
 //     res.status(500).json({ error: "Failed to fetch data" });
 //   }
 // };
+// import { Request, Response } from "express";
+// import axios from "axios";
+// import jsonStream from "JSONStream";
+// import zlib from "zlib";
+
+// const cache = new Map<string, string>();
+
+// export const streamProcessor = async (
+//   req: Request,
+//   res: Response
+// ): Promise<void> => {
+//   const sourceUrl = req.query.sourceUrl as string;
+
+//   if (!sourceUrl) {
+//     res.status(400).json({ error: "No source URL provided" });
+//     return;
+//   }
+
+//   try {
+//     let cachedData = cache.get(sourceUrl);
+//     res.setHeader("Content-Encoding", "gzip");
+//     res.setHeader("Content-Type", "application/json");
+
+//     if (!cachedData) {
+//       const response = await axios.get(sourceUrl, {
+//         responseType: "stream",
+//         timeout: 60000,
+//         headers: { "User-Agent": "Mozilla/5.0" },
+//       });
+
+//       res.setHeader("Content-Encoding", "gzip");
+//       res.setHeader("Content-Type", "application/json");
+
+//       const gzip = zlib.createGzip();
+//       response.data
+//         .pipe(jsonStream.parse("*"))
+//         .on("data", (obj: any) => {
+//           const jsonString = JSON.stringify(obj) + ",";
+//           gzip.write(jsonString);
+//         })
+//         .on("end", () => {
+//           gzip.end();
+//         })
+//         .on("error", (err: any) => {
+//           console.error("Stream error:", err);
+//           res.status(500).json({ error: "Failed to process stream" });
+//         });
+
+//       gzip.pipe(res);
+//     } else {
+//       console.log("Serving cached data...");
+//       res.setHeader("Content-Encoding", "gzip");
+//       res.setHeader("Content-Type", "application/json");
+
+//       const gzip = zlib.createGzip();
+
+//       gzip.write(cachedData);
+//       gzip.end();
+//       gzip.pipe(res);
+//     }
+//   } catch (error) {
+//     console.error("Error streaming JSON:", error);
+//     res.status(500).json({ error: "Failed to stream JSON file" });
+//   }
+// };
 import { Request, Response } from "express";
 import axios from "axios";
 import jsonStream from "JSONStream";
@@ -345,45 +410,49 @@ export const streamProcessor = async (
   try {
     let cachedData = cache.get(sourceUrl);
 
-    if (!cachedData) {
-      const response = await axios.get(sourceUrl, {
-        responseType: "stream",
-        timeout: 60000,
-        headers: { "User-Agent": "Mozilla/5.0" },
-      });
+    res.setHeader("Content-Encoding", "gzip");
+    res.setHeader("Content-Type", "application/json");
 
-      res.setHeader("Content-Encoding", "gzip");
-      res.setHeader("Content-Type", "application/json");
-
-      const gzip = zlib.createGzip();
-      response.data
-        .pipe(jsonStream.parse("*"))
-        .on("data", (obj: any) => {
-          const jsonString = JSON.stringify(obj) + ",";
-          gzip.write(jsonString);
-        })
-        .on("end", () => {
-          gzip.end();
-        })
-        .on("error", (err: any) => {
-          console.error("Stream error:", err);
-          res.status(500).json({ error: "Failed to process stream" });
-        });
-
-      gzip.pipe(res);
-    } else {
+    if (cachedData) {
       console.log("Serving cached data...");
-      res.setHeader("Content-Encoding", "gzip");
-      res.setHeader("Content-Type", "application/json");
-
       const gzip = zlib.createGzip();
-
-      gzip.write(cachedData);
-      gzip.end();
-      gzip.pipe(res);
+      gzip.pipe(res); // Pipe before writing
+      gzip.end(cachedData); // End stream properly
+      return;
     }
-  } catch (error) {
-    console.error("Error streaming JSON:", error);
+
+    const response = await axios.get(sourceUrl, {
+      responseType: "stream",
+      timeout: 60000,
+      headers: { "User-Agent": "Mozilla/5.0" },
+    });
+
+    const gzip = zlib.createGzip();
+    gzip.pipe(res);
+
+    let dataChunks: string[] = [];
+
+    response.data
+      .pipe(jsonStream.parse("*"))
+      .on("data", (obj: any) => {
+        const jsonString = JSON.stringify(obj) + ",";
+        gzip.write(jsonString);
+        dataChunks.push(jsonString);
+      })
+      .on("end", () => {
+        gzip.end();
+        cache.set(sourceUrl, dataChunks.join(""));
+      })
+      .on("error", (err) => {
+        console.error("Stream processing error:", err);
+        res.destroy(err);
+      });
+  } catch (error: any) {
+    console.error(
+      "Error streaming JSON:",
+      error?.response?.status,
+      error?.response?.data || error.message
+    );
     res.status(500).json({ error: "Failed to stream JSON file" });
   }
 };
