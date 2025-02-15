@@ -347,7 +347,6 @@ export const streamProcessor = async (
     let cachedData = cache.get(sourceUrl);
 
     if (!cachedData) {
-      //   console.log("Fetching data from source...");
       const response = await axios.get(sourceUrl, { responseType: "stream" });
 
       res.setHeader("Content-Encoding", "gzip");
@@ -377,7 +376,7 @@ export const streamProcessor = async (
       res.setHeader("Transfer-Encoding", "chunked");
 
       const gzip = zlib.createGzip();
-      //   console.log("data", gzip);
+
       gzip.write(cachedData);
       gzip.end();
       gzip.pipe(res);
