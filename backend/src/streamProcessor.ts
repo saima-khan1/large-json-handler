@@ -354,7 +354,6 @@ export const streamProcessor = async (
 
       res.setHeader("Content-Encoding", "gzip");
       res.setHeader("Content-Type", "application/json");
-      res.setHeader("Transfer-Encoding", "chunked");
 
       const gzip = zlib.createGzip();
       response.data
@@ -376,7 +375,6 @@ export const streamProcessor = async (
       console.log("Serving cached data...");
       res.setHeader("Content-Encoding", "gzip");
       res.setHeader("Content-Type", "application/json");
-      res.setHeader("Transfer-Encoding", "chunked");
 
       const gzip = zlib.createGzip();
 
