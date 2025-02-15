@@ -177,57 +177,56 @@
 // };
 
 /* farhan code below* */
-// import { Request, Response } from "express";
-// import axios from "axios";
-// import zlib from "zlib";
+import { Request, Response } from "express";
+import axios from "axios";
+import zlib from "zlib";
 
-// const CHUNK_SIZE = 2000 * 1024;
-// const cache = new Map<string, string>();
+const CHUNK_SIZE = 500 * 1024;
+const cache = new Map<string, string>();
 
-// export const streamProcessor = async (
-//   req: Request,
-//   res: Response
-// ): Promise<void> => {
-//   const sourceUrl = req.query.sourceUrl as string;
-//   const start = parseInt(req.query.start as string, 10) || 0;
-//   const limit = CHUNK_SIZE;
+export const streamProcessor = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  const sourceUrl = req.query.sourceUrl as string;
+  const start = parseInt(req.query.start as string, 10) || 0;
+  const limit = CHUNK_SIZE;
 
-//   if (!sourceUrl) {
-//     res.status(400).json({ error: "No source URL provided" });
-//     return;
-//   }
+  if (!sourceUrl) {
+    res.status(400).json({ error: "No source URL provided" });
+    return;
+  }
 
-//   try {
-//     let jsonData = cache.get(sourceUrl);
+  try {
+    let jsonData = cache.get(sourceUrl);
 
-//     if (!jsonData) {
-//       const response = await axios({
-//         method: "get",
-//         url: sourceUrl,
-//         responseType: "text",
-//       });
+    if (!jsonData) {
+      const response = await axios({
+        method: "get",
+        url: sourceUrl,
+        responseType: "text",
+      });
 
-//       jsonData = response.data;
-//       cache.set(sourceUrl, jsonData as any);
-//     }
+      jsonData = response.data;
+      cache.set(sourceUrl, jsonData as any);
+    }
 
-//     const chunk = (jsonData as any).substring(start, start + limit);
-//     console.log("chunkdata", chunk);
+    const chunk = (jsonData as any).substring(start, start + limit);
 
-//     // Set response headers
-//     res.setHeader("Content-Encoding", "gzip");
-//     res.setHeader("Content-Type", "application/json");
-//     res.setHeader("Transfer-Encoding", "chunked");
+    // Set response headers
+    res.setHeader("Content-Encoding", "gzip");
+    res.setHeader("Content-Type", "application/json");
+    res.setHeader("Transfer-Encoding", "chunked");
 
-//     // Send compressed chunk
-//     console.log(`Sending chunk: ${start} - ${start + chunk.length}`);
-//     res.write(zlib.gzipSync(chunk));
-//     res.end();
-//   } catch (error) {
-//     console.error("Error streaming JSON:", (error as Error).message);
-//     res.status(500).json({ error: "Failed to stream JSON file" });
-//   }
-// };
+    // Send compressed chunk
+    console.log(`Sending chunk: ${start} - ${start + chunk.length}`);
+    res.write(zlib.gzipSync(chunk));
+    res.end();
+  } catch (error) {
+    console.error("Error streaming JSON:", (error as Error).message);
+    res.status(500).json({ error: "Failed to stream JSON file" });
+  }
+};
 
 /* farhan code modified below* */
 
@@ -325,64 +324,64 @@
 //     res.status(500).json({ error: "Failed to fetch data" });
 //   }
 // };
-import { Request, Response } from "express";
-import axios from "axios";
-import jsonStream from "JSONStream";
-import zlib from "zlib";
+// import { Request, Response } from "express";
+// import axios from "axios";
+// import jsonStream from "JSONStream";
+// import zlib from "zlib";
 
-const cache = new Map<string, string>();
+// const cache = new Map<string, string>();
 
-export const streamProcessor = async (
-  req: Request,
-  res: Response
-): Promise<void> => {
-  const sourceUrl = req.query.sourceUrl as string;
+// export const streamProcessor = async (
+//   req: Request,
+//   res: Response
+// ): Promise<void> => {
+//   const sourceUrl = req.query.sourceUrl as string;
 
-  if (!sourceUrl) {
-    res.status(400).json({ error: "No source URL provided" });
-    return;
-  }
+//   if (!sourceUrl) {
+//     res.status(400).json({ error: "No source URL provided" });
+//     return;
+//   }
 
-  try {
-    let cachedData = cache.get(sourceUrl);
+//   try {
+//     let cachedData = cache.get(sourceUrl);
 
-    if (!cachedData) {
-      const response = await axios.get(sourceUrl, { responseType: "stream" });
+//     if (!cachedData) {
+//       const response = await axios.get(sourceUrl, { responseType: "stream" });
 
-      res.setHeader("Content-Encoding", "gzip");
-      res.setHeader("Content-Type", "application/json");
-      res.setHeader("Transfer-Encoding", "chunked");
+//       res.setHeader("Content-Encoding", "gzip");
+//       res.setHeader("Content-Type", "application/json");
+//       res.setHeader("Transfer-Encoding", "chunked");
 
-      const gzip = zlib.createGzip();
-      response.data
-        .pipe(jsonStream.parse("*")) // Stream JSON objects
-        .on("data", (obj: any) => {
-          const jsonString = JSON.stringify(obj) + ",";
-          gzip.write(jsonString);
-        })
-        .on("end", () => {
-          gzip.end();
-        })
-        .on("error", (err: any) => {
-          console.error("Stream error:", err);
-          res.status(500).json({ error: "Failed to process stream" });
-        });
+//       const gzip = zlib.createGzip();
+//       response.data
+//         .pipe(jsonStream.parse("*")) // Stream JSON objects
+//         .on("data", (obj: any) => {
+//           const jsonString = JSON.stringify(obj) + ",";
+//           gzip.write(jsonString);
+//         })
+//         .on("end", () => {
+//           gzip.end();
+//         })
+//         .on("error", (err: any) => {
+//           console.error("Stream error:", err);
+//           res.status(500).json({ error: "Failed to process stream" });
+//         });
 
-      gzip.pipe(res);
-    } else {
-      console.log("Serving cached data...");
-      res.setHeader("Content-Encoding", "gzip");
-      res.setHeader("Content-Type", "application/json");
-      res.setHeader("Transfer-Encoding", "chunked");
+//       gzip.pipe(res);
+//     } else {
+//       console.log("Serving cached data...");
+//       res.setHeader("Content-Encoding", "gzip");
+//       res.setHeader("Content-Type", "application/json");
+//       res.setHeader("Transfer-Encoding", "chunked");
 
-      const gzip = zlib.createGzip();
+//       const gzip = zlib.createGzip();
 
-      gzip.write(cachedData);
-      gzip.end();
-      gzip.pipe(res);
-    }
-  } catch (error) {
-    console.error("Error streaming JSON:", error);
-    res.status(500).json({ error: "Failed to stream JSON file" });
-  }
-};
+//       gzip.write(cachedData);
+//       gzip.end();
+//       gzip.pipe(res);
+//     }
+//   } catch (error) {
+//     console.error("Error streaming JSON:", error);
+//     res.status(500).json({ error: "Failed to stream JSON file" });
+//   }
+// };
