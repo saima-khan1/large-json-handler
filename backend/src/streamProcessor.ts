@@ -53,7 +53,7 @@ export const streamProcessor = async (
 
     let accumulatedChunk = "";
     let totalChunkSize = 0;
-    const CHUNK_SIZE_LIMIT = 20 * 1024;
+    const CHUNK_SIZE_LIMIT = 1000 * 1024;
     let isFirstChunk = true;
 
     function processAndSendObject(obj: any) {
