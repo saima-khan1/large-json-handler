@@ -85,6 +85,127 @@
 //     res.status(500).json({ error: "Failed to fetch data" });
 //   }
 // };
+// import { Request, Response } from "express";
+// import axios from "axios";
+// import jsonstream from "jsonstream";
+// import { searchObject } from "./search";
+
+// export const streamProcessor = async (
+//   req: Request,
+//   res: Response
+// ): Promise<void> => {
+//   const sourceUrl = req.query.sourceUrl as string;
+//   const searchKeyword = (req.query.search as string) || "";
+
+//   if (!sourceUrl) {
+//     res.status(400).json({ error: "No source URL provided" });
+//     return;
+//   }
+
+//   try {
+//     const response = await axios.get(sourceUrl, {
+//       responseType: "stream",
+//       timeout: 60000,
+//       headers: { "User-Agent": "Mozilla/5.0" },
+//     });
+
+//     res.setHeader("Content-Type", "application/json");
+
+//     let accumulatedChunk = "";
+//     let totalChunkSize = 0;
+//     const CHUNK_SIZE_LIMIT = 20 * 1024;
+//     let isFirstChunk = true;
+
+//     if (!response.data) {
+//       res.json({ message: "not found" });
+//       return;
+//     }
+
+//     response.data
+//       .pipe(jsonstream.parse("*"))
+//       .on("data", (jsonData: string | Record<string, unknown> | null) => {
+//         if (Array.isArray(jsonData)) {
+//           jsonData.forEach(processAndSendObject);
+//         } else {
+//           processAndSendObject(jsonData);
+//         }
+//       })
+//       .on("end", () => {
+//         if (accumulatedChunk) {
+//           res.write("[" + accumulatedChunk + "]");
+//         }
+
+//         res.end();
+//       })
+//       .on("error", (err: any) => {
+//         console.error("Stream error:", err);
+//         res.status(500).json({ error: "Failed to process stream" });
+//       });
+
+//     function processAndSendObject(
+//       obj: string | Record<string, unknown> | null
+//     ) {
+//       if (!searchKeyword || searchObject(obj, searchKeyword)) {
+//         const jsonString = JSON.stringify(obj, null, 2);
+
+//         if (!isFirstChunk) {
+//           accumulatedChunk += ",";
+//         }
+//         isFirstChunk = false;
+
+//         accumulatedChunk += jsonString;
+//         totalChunkSize += jsonString.length;
+
+//         if (totalChunkSize >= CHUNK_SIZE_LIMIT) {
+//           try {
+//             res.write(accumulatedChunk);
+//             accumulatedChunk = "";
+//             totalChunkSize = 0;
+//           } catch (error) {
+//             console.error("Error writing chunk:", error);
+//             res.status(500).end();
+//           }
+//         }
+//       }
+//     }
+//   } catch (error) {
+//     console.error("Error fetching data:", error);
+//     res.status(500).json({ error: "Failed to fetch data" });
+//   }
+// };
+
+// const books = [
+//   {
+//     name: "JS",
+//     author: "Farhan",
+//   },
+//   {
+//     name: "Python",
+//     author: "John",
+//   },
+//   {
+//     name: "C#",
+//     author: "Farhan",
+//   },
+//   {
+//     name: "Java",
+//     author: "John",
+//   },
+//   {
+//     name: "AI learning",
+//     author: "Smth",
+//   },
+// ];
+
+// const johnBooks = books.filter((book) => book.author === "John");
+// books.map((book) => book.author);
+// books.every((book) => book.author === "John");
+// books.some((book) => book.author === "John");
+
+// Practice For of Loop
+// Map Loop vs new Map()
+
+// console.log(johnBooks);
 import { Request, Response } from "express";
 import axios from "axios";
 import jsonstream from "jsonstream";
@@ -103,73 +224,43 @@ export const streamProcessor = async (
   }
 
   try {
-    const response = await axios.get(sourceUrl, {
+    const response = await axios({
+      method: "get",
+      url: sourceUrl,
       responseType: "stream",
-      timeout: 60000,
-      headers: { "User-Agent": "Mozilla/5.0" },
     });
 
     res.setHeader("Content-Type", "application/json");
+    res.setHeader("Transfer-Encoding", "chunked");
 
-    let accumulatedChunk = "";
-    let totalChunkSize = 0;
-    const CHUNK_SIZE_LIMIT = 20 * 1024;
-    let isFirstChunk = true;
+    const parser = jsonstream.parse("*");
 
-    if (!response.data) {
-      res.json({ message: "not found" });
-      return;
-    }
+    response.data.pipe(parser);
 
-    response.data
-      .pipe(jsonstream.parse("*"))
-      .on("data", (jsonData: string | Record<string, unknown> | null) => {
-        if (Array.isArray(jsonData)) {
-          jsonData.forEach(processAndSendObject);
-        } else {
-          processAndSendObject(jsonData);
-        }
-      })
-      .on("end", () => {
-        if (accumulatedChunk) {
-          res.write("[" + accumulatedChunk + "]");
-        }
-
-        res.end();
-      })
-      .on("error", (err: any) => {
-        console.error("Stream error:", err);
-        res.status(500).json({ error: "Failed to process stream" });
-      });
-
-    function processAndSendObject(
-      obj: string | Record<string, unknown> | null
-    ) {
-      if (!searchKeyword || searchObject(obj, searchKeyword)) {
-        const jsonString = JSON.stringify(obj, null, 2);
-
-        if (!isFirstChunk) {
-          accumulatedChunk += ",";
-        }
-        isFirstChunk = false;
-
-        accumulatedChunk += jsonString;
-        totalChunkSize += jsonString.length;
-
-        if (totalChunkSize >= CHUNK_SIZE_LIMIT) {
-          try {
-            res.write(accumulatedChunk);
-            accumulatedChunk = "";
-            totalChunkSize = 0;
-          } catch (error) {
-            console.error("Error writing chunk:", error);
-            res.status(500).end();
+    parser.on("data", (chunk) => {
+      try {
+        if (searchKeyword) {
+          const matches = searchObject(chunk, searchKeyword);
+          if (matches) {
+            return res.write(JSON.stringify(matches) + "\n");
           }
         }
+        return res.write(JSON.stringify(chunk) + "\n");
+      } catch (error) {
+        console.error("Error processing chunk:", error);
       }
-    }
-  } catch (error) {
-    console.error("Error fetching data:", error);
-    res.status(500).json({ error: "Failed to fetch data" });
+    });
+
+    parser.on("end", () => {
+      res.end();
+    });
+
+    parser.on("error", (err) => {
+      console.error("Error parsing JSON stream:", err);
+      res.status(500).send("Error processing data");
+    });
+  } catch (err) {
+    console.error("Error fetching file:", err);
+    res.status(500).send("Error fetching file");
   }
 };
