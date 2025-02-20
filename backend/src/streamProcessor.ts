@@ -1,178 +1,81 @@
-// import { Request, Response } from "express";
-// import axios from "axios";
-// import jsonstream from "jsonstream";
-// import zlib from "zlib";
-// import { searchObject } from "./search";
+import { Request, Response } from "express";
+import axios from "axios";
+import jsonstream from "jsonstream";
+import { processAndSendObject } from "./processData";
 
-// export const streamProcessor = async (
-//   req: Request,
-//   res: Response
-// ): Promise<void> => {
-//   const sourceUrl = req.query.sourceUrl as string;
-//   const searchKeyword = (req.query.search as string) || "";
+export const streamProcessor = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  const sourceUrl = req.query.sourceUrl as string;
+  const searchKeyword = (req.query.search as string) || "";
 
-//   if (!sourceUrl) {
-//     res.status(400).json({ error: "No source URL provided" });
-//     return;
-//   }
+  if (!sourceUrl) {
+    res.status(400).json({ error: "No source URL provided" });
+    return;
+  }
 
-//   try {
-//     const response = await axios.get(sourceUrl, {
-//       responseType: "stream",
-//       timeout: 60000,
-//       headers: { "User-Agent": "Mozilla/5.0" },
-//     });
+  try {
+    const response = await axios.get(sourceUrl, {
+      responseType: "stream",
+      timeout: 60000,
+      headers: { "User-Agent": "Mozilla/5.0" },
+    });
 
-//     res.setHeader("Content-Type", "application/json");
-//     res.setHeader("Content-Encoding", "gzip");
+    res.setHeader("Content-Type", "application/json");
 
-//     const gzip = zlib.createGzip();
+    let accumulatedChunkRef = { value: "" };
+    let totalChunkSizeRef = { value: 0 };
+    const CHUNK_SIZE_LIMIT = 20 * 1024;
+    let isFirstChunkRef = { value: true };
 
-//     response.data
-//       .pipe(jsonstream.parse("*"))
-//       .on("data", (jsonData: any) => {
-//         if (Array.isArray(jsonData)) {
-//           jsonData.forEach(processAndSendObject);
-//         } else {
-//           processAndSendObject(jsonData);
-//         }
-//       })
-//       .on("end", () => {
-//         // Final chunk after stream ends
-//         if (accumulatedChunk.length > 0) {
-//           gzip.write("[" + accumulatedChunk + "]");
-//         }
-//         gzip.end();
-//       })
-//       .on("error", (err: any) => {
-//         console.error("Stream error:", err);
-//         res.status(500).json({ error: "Failed to process stream" });
-//       });
+    if (!response.data) {
+      res.json({ message: "not found" });
+      return;
+    }
 
-//     gzip.pipe(res);
-
-//     let accumulatedChunk = "";
-//     let totalChunkSize = 0;
-//     const CHUNK_SIZE_LIMIT = 1000 * 1024;
-//     let isFirstChunk = true;
-
-//     function processAndSendObject(obj: any) {
-//       if (!searchKeyword || searchObject(obj, searchKeyword)) {
-//         try {
-//           const jsonString = JSON.stringify(obj);
-
-//           if (accumulatedChunk.length > 0) {
-//             accumulatedChunk += ",";
-//           }
-
-//           accumulatedChunk += jsonString;
-//           totalChunkSize += Buffer.byteLength(jsonString, "utf8");
-
-//           if (totalChunkSize >= CHUNK_SIZE_LIMIT) {
-//             gzip.write("[" + accumulatedChunk + "]");
-//             gzip.write(accumulatedChunk);
-//             accumulatedChunk = "";
-//             totalChunkSize = 0;
-//           }
-//         } catch (error) {
-//           console.error("Error processing JSON object:", error);
-//           res.status(500).end();
-//         }
-//       }
-//     }
-//   } catch (error) {
-//     console.error("Error fetching data:", error);
-//     res.status(500).json({ error: "Failed to fetch data" });
-//   }
-// };
-// import { Request, Response } from "express";
-// import axios from "axios";
-// import jsonstream from "jsonstream";
-// import { searchObject } from "./search";
-
-// export const streamProcessor = async (
-//   req: Request,
-//   res: Response
-// ): Promise<void> => {
-//   const sourceUrl = req.query.sourceUrl as string;
-//   const searchKeyword = (req.query.search as string) || "";
-
-//   if (!sourceUrl) {
-//     res.status(400).json({ error: "No source URL provided" });
-//     return;
-//   }
-
-//   try {
-//     const response = await axios.get(sourceUrl, {
-//       responseType: "stream",
-//       timeout: 60000,
-//       headers: { "User-Agent": "Mozilla/5.0" },
-//     });
-
-//     res.setHeader("Content-Type", "application/json");
-
-//     let accumulatedChunk = "";
-//     let totalChunkSize = 0;
-//     const CHUNK_SIZE_LIMIT = 20 * 1024;
-//     let isFirstChunk = true;
-
-//     if (!response.data) {
-//       res.json({ message: "not found" });
-//       return;
-//     }
-
-//     response.data
-//       .pipe(jsonstream.parse("*"))
-//       .on("data", (jsonData: string | Record<string, unknown> | null) => {
-//         if (Array.isArray(jsonData)) {
-//           jsonData.forEach(processAndSendObject);
-//         } else {
-//           processAndSendObject(jsonData);
-//         }
-//       })
-//       .on("end", () => {
-//         if (accumulatedChunk) {
-//           res.write("[" + accumulatedChunk + "]");
-//         }
-
-//         res.end();
-//       })
-//       .on("error", (err: any) => {
-//         console.error("Stream error:", err);
-//         res.status(500).json({ error: "Failed to process stream" });
-//       });
-
-//     function processAndSendObject(
-//       obj: string | Record<string, unknown> | null
-//     ) {
-//       if (!searchKeyword || searchObject(obj, searchKeyword)) {
-//         const jsonString = JSON.stringify(obj, null, 2);
-
-//         if (!isFirstChunk) {
-//           accumulatedChunk += ",";
-//         }
-//         isFirstChunk = false;
-
-//         accumulatedChunk += jsonString;
-//         totalChunkSize += jsonString.length;
-
-//         if (totalChunkSize >= CHUNK_SIZE_LIMIT) {
-//           try {
-//             res.write(accumulatedChunk);
-//             accumulatedChunk = "";
-//             totalChunkSize = 0;
-//           } catch (error) {
-//             console.error("Error writing chunk:", error);
-//             res.status(500).end();
-//           }
-//         }
-//       }
-//     }
-//   } catch (error) {
-//     console.error("Error fetching data:", error);
-//     res.status(500).json({ error: "Failed to fetch data" });
-//   }
-// };
+    response.data
+      .pipe(jsonstream.parse("*"))
+      .on("data", (jsonData: string | Record<string, unknown> | null) => {
+        if (Array.isArray(jsonData)) {
+          jsonData.forEach((obj) =>
+            processAndSendObject(
+              obj,
+              searchKeyword,
+              res,
+              accumulatedChunkRef,
+              totalChunkSizeRef,
+              CHUNK_SIZE_LIMIT,
+              isFirstChunkRef
+            )
+          );
+        } else {
+          processAndSendObject(
+            jsonData,
+            searchKeyword,
+            res,
+            accumulatedChunkRef,
+            totalChunkSizeRef,
+            CHUNK_SIZE_LIMIT,
+            isFirstChunkRef
+          );
+        }
+      })
+      .on("end", () => {
+        if (accumulatedChunkRef.value) {
+          res.write("[" + accumulatedChunkRef.value + "]");
+        }
+        res.end();
+      })
+      .on("error", (err: any) => {
+        console.error("Stream error:", err);
+        res.status(500).json({ error: "Failed to process stream" });
+      });
+  } catch (error) {
+    console.error("Error fetching data:", error);
+    res.status(500).json({ error: "Failed to fetch data" });
+  }
+};
 
 // const books = [
 //   {
@@ -206,61 +109,3 @@
 // Map Loop vs new Map()
 
 // console.log(johnBooks);
-import { Request, Response } from "express";
-import axios from "axios";
-import jsonstream from "jsonstream";
-import { searchObject } from "./search";
-
-export const streamProcessor = async (
-  req: Request,
-  res: Response
-): Promise<void> => {
-  const sourceUrl = req.query.sourceUrl as string;
-  const searchKeyword = (req.query.search as string) || "";
-
-  if (!sourceUrl) {
-    res.status(400).json({ error: "No source URL provided" });
-    return;
-  }
-
-  try {
-    const response = await axios({
-      method: "get",
-      url: sourceUrl,
-      responseType: "stream",
-    });
-
-    res.setHeader("Content-Type", "application/json");
-    res.setHeader("Transfer-Encoding", "chunked");
-
-    const parser = jsonstream.parse("*");
-
-    response.data.pipe(parser);
-
-    parser.on("data", (chunk) => {
-      try {
-        if (searchKeyword) {
-          const matches = searchObject(chunk, searchKeyword);
-          if (matches) {
-            return res.write(JSON.stringify(matches) + "\n");
-          }
-        }
-        return res.write(JSON.stringify(chunk) + "\n");
-      } catch (error) {
-        console.error("Error processing chunk:", error);
-      }
-    });
-
-    parser.on("end", () => {
-      res.end();
-    });
-
-    parser.on("error", (err) => {
-      console.error("Error parsing JSON stream:", err);
-      res.status(500).send("Error processing data");
-    });
-  } catch (err) {
-    console.error("Error fetching file:", err);
-    res.status(500).send("Error fetching file");
-  }
-};
