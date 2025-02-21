@@ -166,15 +166,15 @@ const ChunkedDataLoader: React.FC = () => {
                 isSearchActive={isSearchActive}
               />
 
-              {loadingJson ? (
+              {loadingJson || isSearching ? (
                 <Box display="flex" justifyContent="center" my={2}>
                   <CircularProgress />
                 </Box>
               ) : (
                 <JsonViewer visibleChunks={visibleChunks} error={error} />
               )}
-
               {!loadingJson &&
+                !isSearching &&
                 ((isSearchActive && hasMoreSearch) ||
                   (!isSearchActive && hasMore)) && (
                   <Box mt={2}>
