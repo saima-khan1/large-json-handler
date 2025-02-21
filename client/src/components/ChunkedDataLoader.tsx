@@ -73,6 +73,20 @@ const ChunkedDataLoader: React.FC = () => {
 
   const fetchData = () => loadData();
 
+  const handleUrlChange = (newUrl: string) => {
+    setFetchedUrl(newUrl);
+    setVisibleChunks([]);
+    allChunksRef.current = [];
+    searchChunksRef.current = [];
+    setSearchKeyword("");
+    setIsSearchActive(false);
+    setError(null);
+    setHasMore(false);
+    setHasMoreSearch(false);
+    setCurrentIndex(0);
+    setCurrentSearchIndex(0);
+  };
+
   const handleSearch = () => {
     if (!fetchedUrl) return;
     setIsSearching(true);
@@ -149,7 +163,7 @@ const ChunkedDataLoader: React.FC = () => {
 
           <UrlInput
             fetchedUrl={fetchedUrl}
-            setFetchedUrl={setFetchedUrl}
+            setFetchedUrl={handleUrlChange}
             fetchData={fetchData}
             loading={loadingJson}
           />

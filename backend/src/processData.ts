@@ -1,7 +1,7 @@
 import { Response } from "express";
 import { searchObject } from "./search";
 
-export function processAndSendObject(
+export const processAndSendObject = (
   obj: string | Record<string, unknown> | null,
   searchKeyword: string,
   res: Response,
@@ -9,7 +9,7 @@ export function processAndSendObject(
   totalChunkSizeRef: { value: number },
   CHUNK_SIZE_LIMIT: number,
   isFirstChunkRef: { value: boolean }
-): void {
+) => {
   if (!searchKeyword || searchObject(obj, searchKeyword)) {
     const jsonString = JSON.stringify(obj, null, 2);
 
@@ -32,4 +32,4 @@ export function processAndSendObject(
       }
     }
   }
-}
+};

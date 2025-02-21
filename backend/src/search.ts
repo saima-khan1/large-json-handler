@@ -1,4 +1,3 @@
-// Use type guard.
 export const searchObject = (
   obj: string | Record<string, unknown> | null,
   keyword: string
