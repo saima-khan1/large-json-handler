@@ -76,36 +76,3 @@ export const streamProcessor = async (
     res.status(500).json({ error: "Failed to fetch data" });
   }
 };
-
-// const books = [
-//   {
-//     name: "JS",
-//     author: "Farhan",
-//   },
-//   {
-//     name: "Python",
-//     author: "John",
-//   },
-//   {
-//     name: "C#",
-//     author: "Farhan",
-//   },
-//   {
-//     name: "Java",
-//     author: "John",
-//   },
-//   {
-//     name: "AI learning",
-//     author: "Smth",
-//   },
-// ];
-
-// const johnBooks = books.filter((book) => book.author === "John");
-// books.map((book) => book.author);
-// books.every((book) => book.author === "John");
-// books.some((book) => book.author === "John");
-
-// Practice For of Loop
-// Map Loop vs new Map()
-
-// console.log(johnBooks);
