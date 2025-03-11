@@ -30,15 +30,41 @@ const HelpInfo: React.FC = () => {
       </Stack>
 
       <Drawer anchor="right" open={open} onClose={() => setOpen(false)}>
-        <Box sx={{ width: 300, padding: 2 }}>
-          <Typography variant="h6">About This App</Typography>
+        <Box sx={{ width: 500, padding: 2 }}>
+          <Typography
+            variant="h3"
+            sx={{
+              mt: 2,
+              marginLeft: 4,
+            }}
+          >
+            About This App
+          </Typography>
           <Typography variant="h6" sx={{ mt: 2 }}>
-            This application efficiently processes and displays large JSON files
-            by streaming data in small chunks instead of loading everything at
-            once. This approach optimizes page performance, reduces memory
-            usage, and ensures a smooth user experience. It supports search
-            functionality and pagination, making large datasets easy to navigate
-            and interact with.
+            <ul>
+              <li>Efficiently processes and displays large JSON files.</li>
+              <li>
+                Streams data in small chunks instead of loading everything at
+                once.
+              </li>
+              <li>Optimizes page performance.</li>
+              <li>Reduces memory usage.</li>
+              <li>Ensures a smooth user experience.</li>
+              <li>Supports search functionality.</li>
+              <li>
+                Includes pagination for easy navigation of large datasets.
+              </li>
+              <li>
+                Example URL to test:{" "}
+                <a
+                  href="https://jsonplaceholder.typicode.com/photos"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  https://jsonplaceholder.typicode.com/photos
+                </a>
+              </li>
+            </ul>
           </Typography>
         </Box>
       </Drawer>
