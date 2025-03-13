@@ -187,7 +187,7 @@ const ChunkedDataLoader: React.FC = () => {
                 !isSearching &&
                 ((isSearchActive && hasMoreSearch) ||
                   (!isSearchActive && hasMore)) && (
-                  <Box mt={2}>
+                  <Box mt={2} minHeight={{ sm: "40vh" }}>
                     <ShowMoreButton
                       handleShowMore={handleShowMore}
                       hasMore={true}
