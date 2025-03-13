@@ -1,6 +1,7 @@
 import React from "react";
 import ReactJson from "@microlink/react-json-view";
 import { jsonrepair } from "jsonrepair";
+import { Container } from "@mui/material";
 
 interface JsonViewerProps {
   visibleChunks: string[];
@@ -21,16 +22,18 @@ const JsonViewer: React.FC<JsonViewerProps> = ({ visibleChunks, error }) => {
     const parsedJson = JSON.parse(repairedJson);
 
     return (
-      <ReactJson
-        src={parsedJson.flat()}
-        theme="monokai"
-        collapsed={1}
-        enableClipboard={true}
-        displayDataTypes={false}
-        iconStyle="triangle"
-        groupArraysAfterLength={0}
-        style={{ fontSize: "18px" }}
-      />
+      <Container maxWidth="md">
+        <ReactJson
+          src={parsedJson.flat()}
+          theme="monokai"
+          collapsed={1}
+          enableClipboard={true}
+          displayDataTypes={false}
+          iconStyle="triangle"
+          groupArraysAfterLength={0}
+          style={{ fontSize: "18px" }}
+        />
+      </Container>
     );
   } catch (err) {
     console.warn("⚠️ JSON Repair Failed:", err);

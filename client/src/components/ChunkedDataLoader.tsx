@@ -136,37 +136,33 @@ const ChunkedDataLoader: React.FC = () => {
 
   return (
     <>
-      <Container
-        maxWidth="md"
-        sx={{
-          py: 3,
-        }}
-      >
+      <Container maxWidth="lg">
         <Stack
           alignItems="center"
           justifyContent="space-around"
           spacing={2}
-          sx={{ mb: 3, mt: 7 }}
+          sx={{ mb: 2, mt: 7 }}
         >
           <Typography
             variant="h3"
             fontWeight="bold"
             sx={{
               textAlign: "center",
-              pb: 6,
+              pb: 0,
               fontSize: { xs: "1.8rem", sm: "2.5rem", md: "3rem" },
             }}
           >
             Large Json Data Viewer
           </Typography>
           <HelpTooltip />
-
-          <UrlInput
-            fetchedUrl={fetchedUrl}
-            setFetchedUrl={handleUrlChange}
-            fetchData={fetchData}
-            loading={loadingJson}
-          />
+          <Box>
+            <UrlInput
+              fetchedUrl={fetchedUrl}
+              setFetchedUrl={handleUrlChange}
+              fetchData={fetchData}
+              loading={loadingJson}
+            />
+          </Box>
 
           {fetchedUrl && (
             <Box mt={3}>

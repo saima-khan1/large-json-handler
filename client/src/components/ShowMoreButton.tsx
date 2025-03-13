@@ -1,3 +1,5 @@
+import { Container } from "@mui/material";
+
 interface ShowMoreButtonProps {
   handleShowMore: () => void;
   hasMore: boolean;
@@ -8,9 +10,11 @@ const ShowMoreButton: React.FC<ShowMoreButtonProps> = ({
   hasMore,
 }) =>
   hasMore ? (
-    <button onClick={handleShowMore} style={buttonStyle}>
-      Show More
-    </button>
+    <Container maxWidth="md">
+      <button onClick={handleShowMore} style={buttonStyle}>
+        Show More
+      </button>
+    </Container>
   ) : null;
 
 const buttonStyle = {

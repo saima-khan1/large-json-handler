@@ -1,5 +1,5 @@
 import React from "react";
-import { Button, InputBase, Box } from "@mui/material";
+import { Button, InputBase, Box, Container } from "@mui/material";
 
 interface SearchBarProps {
   searchKeyword: string;
@@ -19,46 +19,48 @@ const SearchBar: React.FC<SearchBarProps> = ({
   isSearching,
   isSearchActive,
 }) => (
-  <Box
-    sx={{
-      display: "flex",
-      alignItems: "center",
-      border: "1px solid #ccc",
-      borderRadius: "8px",
-      overflow: "hidden",
-      width: "850px",
-      marginTop: "20px",
-      marginBottom: "20px",
-    }}
-  >
-    <InputBase
-      sx={{ flex: 1, padding: "8px", fontSize: "16px" }}
-      placeholder="Search..."
-      value={searchKeyword}
-      onChange={(e) => setSearchKeyword(e.target.value)}
-    />
-
-    <Button
-      variant="contained"
-      color="info"
-      sx={{ borderRadius: 0, lineHeight: 2.75, minWidth: "120px" }}
-      onClick={handleSearch}
-      disabled={isSearching}
+  <Container maxWidth="md">
+    <Box
+      sx={{
+        display: "flex",
+        alignItems: "center",
+        border: "1px solid #ccc",
+        borderRadius: "8px",
+        overflow: "hidden",
+        width: { md: 850, sm: 600, xs: 300 },
+        marginTop: "20px",
+        marginBottom: "20px",
+      }}
     >
-      {isSearching ? "Searching..." : "Search"}
-    </Button>
+      <InputBase
+        sx={{ flex: 1, padding: "8px", fontSize: "16px" }}
+        placeholder="Search..."
+        value={searchKeyword}
+        onChange={(e) => setSearchKeyword(e.target.value)}
+      />
 
-    {isSearchActive && (
       <Button
         variant="contained"
-        color="error"
+        color="info"
         sx={{ borderRadius: 0, lineHeight: 2.75, minWidth: "120px" }}
-        onClick={handleClearSearch}
+        onClick={handleSearch}
+        disabled={isSearching}
       >
-        Clear
+        {isSearching ? "Searching..." : "Search"}
       </Button>
-    )}
-  </Box>
+
+      {isSearchActive && (
+        <Button
+          variant="contained"
+          color="error"
+          sx={{ borderRadius: 0, lineHeight: 2.75, minWidth: "120px" }}
+          onClick={handleClearSearch}
+        >
+          Clear
+        </Button>
+      )}
+    </Box>
+  </Container>
 );
 
 export default SearchBar;
