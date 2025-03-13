@@ -9,9 +9,12 @@ interface JsonViewerProps {
 }
 
 const JsonViewer: React.FC<JsonViewerProps> = ({ visibleChunks, error }) => {
-  if (error) return <p style={{ color: "red" }}>{error}</p>;
+  if (error)
+    return <p style={{ color: "red", paddingLeft: "27px" }}>{error}</p>;
   if (visibleChunks.length === 0) {
-    return <p style={{ color: "gray" }}>No data available...</p>;
+    return (
+      <p style={{ color: "gray", paddingLeft: "27px" }}>No data available...</p>
+    );
   }
 
   try {
@@ -37,7 +40,7 @@ const JsonViewer: React.FC<JsonViewerProps> = ({ visibleChunks, error }) => {
     );
   } catch (err) {
     console.warn("⚠️ JSON Repair Failed:", err);
-    return <p style={{ color: "red" }}>Invalid JSON</p>;
+    return <p style={{ color: "red", paddingLeft: "27px" }}>Invalid JSON</p>;
   }
 };
 
